@@ -1,0 +1,10 @@
+[server]
+maxUploadSize = 50
+# Skips Streamlit's first-run "enter your email" prompt, which otherwise blocks startup.
+headless = true
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+primaryColor = "#4F46E5"

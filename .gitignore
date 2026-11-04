@@ -1,0 +1,18 @@
+# Local environments and caches
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Model weights are too big for GitHub (100 MB limit); host them on the Hugging Face Hub
+model/*
+!model/PUT_CHECKPOINT_HERE.txt
+
+# Collected user feedback stays private (it can contain names and personal speech)
+feedback/*.jsonl
+
+# Never commit secrets
+.streamlit/secrets.toml
+
+# Voice data stays off GitHub (demo clips and their scripts)
+samples/

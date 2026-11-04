@@ -1,0 +1,13 @@
+Copy the fine-tuned checkpoint folder from Google Drive into this folder:
+
+    My Drive/wav2vec2_librispeech_finetuned/checkpoint-8920
+
+plus the top-level vocab.json, tokenizer_config.json and processor_config.json,
+so that these paths exist:
+
+    model/checkpoint-8920/config.json
+    model/checkpoint-8920/model.safetensors
+
+The app finds it automatically. Until then it uses the base model
+facebook/wav2vec2-base-960h, which it downloads from the internet on first start (about 360 MB).
+Weights are git-ignored; the deployed app loads them from Hugging Face (see DEPLOY.md).
