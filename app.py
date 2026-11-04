@@ -221,11 +221,15 @@ with tab_try:
         modes.append("🎧 Use a sample clip")
     mode = st.radio("Input", modes, horizontal=True, label_visibility="collapsed")
     if mode.startswith("🎙️"):
-        st.html(MIC_CHECK_HTML, unsafe_allow_javascript=True)
+        mic_html = MIC_CHECK_HTML if samples else MIC_CHECK_HTML.replace(
+            "Use Upload or Sample clip instead.", "Use Upload instead.")
+        st.html(mic_html, unsafe_allow_javascript=True)
         clip = st.audio_input("Press the microphone, speak clearly in English, then press stop.")
+        alternatives = ("Choose **Upload** or **Sample clip** above. Neither needs a microphone or speakers."
+                        if samples else "Choose **Upload** above. It doesn't need a microphone or speakers.")
         st.caption("If the recorder says *\"An error has occurred, please try again\"*, the browser "
                    "could not open a microphone (none connected, or another app is using it). "
-                   "Choose **Upload** or **Sample clip** above. Neither needs a microphone or speakers.")
+                   + alternatives)
     elif mode.startswith("📁"):
         clip = st.file_uploader("Audio file (WAV, FLAC, OGG or MP3)",
                                 type=["wav", "flac", "ogg", "mp3"])

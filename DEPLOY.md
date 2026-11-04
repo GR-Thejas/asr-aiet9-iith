@@ -1,7 +1,18 @@
 # Deploying to Streamlit Community Cloud
 
-The result is a public HTTPS link such as `https://speak-and-transcribe.streamlit.app`.
-It's HTTPS, so visitors' microphones work.
+The result is a public HTTPS link. It's HTTPS, so visitors' microphones work.
+
+## Current deployment
+
+| What | Where |
+|------|-------|
+| Live app | https://asr-aiet9-iith.streamlit.app |
+| Code (GitHub) | https://github.com/GR-Thejas/asr-aiet9-iith (branch `main`, file `app.py`) |
+| Model weights (Hugging Face) | https://huggingface.co/thejasgr/wav2vec2-group6-ckpt8920 |
+| Streamlit settings | Python **3.12**; secrets `ASR_HF_MODEL = "thejasgr/wav2vec2-group6-ckpt8920"`, `ASR_LOCK_MODEL = "1"` |
+
+To change secrets or Python later: share.streamlit.io → the app's ⋮ menu → **Settings**.
+The steps below are how it was set up, for redeploying elsewhere.
 
 You need a GitHub account, a Hugging Face account (both free) and the fine-tuned weights in
 `model/checkpoint-8920/`. See `model/PUT_CHECKPOINT_HERE.txt`.
@@ -39,7 +50,8 @@ git push -u origin main
 2. **Repository:** `YOUR_GITHUB_NAME/speak-and-transcribe` · **Branch:** `main` · **Main file path:** `app.py`
 3. **App URL:** choose your subdomain, e.g. `speak-and-transcribe` → `speak-and-transcribe.streamlit.app`
 4. **Advanced settings:**
-   - **Python version:** 3.12 (3.11 and 3.13 also work. `requirements.txt` pins a CPU PyTorch wheel for each.)
+   - **Python version:** **3.12**. Change it from the default (3.14): `requirements.txt` only has CPU
+     PyTorch wheels for 3.11–3.13, so on 3.14 torch is not installed and the app crashes.
    - **Secrets:** paste the content of `.streamlit/secrets.toml.example`, with your Hugging Face repo name filled in.
 5. Click **Deploy**. The first build takes about 5 minutes. The first visit then downloads the model (about 1 minute).
 
