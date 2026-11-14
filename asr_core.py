@@ -91,6 +91,16 @@ def load_audio(raw: bytes) -> np.ndarray:
     return audio
 
 
+def has_video(raw: bytes) -> bool:
+    """True if the container holds a picture track (audio-only MP4s, e.g. WhatsApp voice notes, don't)."""
+    try:
+        import av
+        with av.open(io.BytesIO(raw)) as container:
+            return any(s.type == "video" for s in container.streams)
+    except Exception:
+        return False
+
+
 def _decode_with_av(raw: bytes) -> np.ndarray:
     """Extract the first audio track of any FFmpeg-readable file as mono 16 kHz float32."""
     import av  # imported lazily: only needed for formats soundfile can't read

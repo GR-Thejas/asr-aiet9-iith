@@ -236,7 +236,8 @@ with tab_try:
                                 type=["wav", "flac", "ogg", "mp3", "m4a", "aac",
                                       "mp4", "mov", "webm", "mkv"])
         if clip is not None:
-            if Path(clip.name).suffix.lower() in VIDEO_EXTS:
+            # WhatsApp voice notes and similar are .mp4 files with no picture: play those as audio.
+            if Path(clip.name).suffix.lower() in VIDEO_EXTS and core.has_video(clip.getvalue()):
                 st.video(clip)
                 st.caption("Only the audio track is transcribed.")
             else:
