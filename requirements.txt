@@ -12,3 +12,4 @@ soundfile
 scipy
 numpy
 pandas
+av>=12
