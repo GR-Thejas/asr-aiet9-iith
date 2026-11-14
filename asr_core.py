@@ -74,13 +74,51 @@ def load_model(source: str):
 # ---------------------------------------------------------------- audio ----
 
 def load_audio(raw: bytes) -> np.ndarray:
-    """Decode WAV/FLAC/OGG/MP3 bytes to mono float32 at 16 kHz."""
-    data, sr = sf.read(io.BytesIO(raw), dtype="float32", always_2d=True)
+    """Decode audio or video bytes to mono float32 at 16 kHz.
+
+    WAV/FLAC/OGG (and MP3 on recent libsndfile) are read with soundfile. Anything it
+    can't read, such as MP4, M4A, MOV, WEBM or MKV, is decoded with PyAV, whose wheel
+    bundles FFmpeg, so no system packages are needed on Streamlit Community Cloud.
+    """
+    try:
+        data, sr = sf.read(io.BytesIO(raw), dtype="float32", always_2d=True)
+    except Exception:
+        return _decode_with_av(raw)
     audio = data.mean(axis=1)
     if sr != TARGET_SR:
         g = gcd(sr, TARGET_SR)
         audio = resample_poly(audio, TARGET_SR // g, sr // g).astype(np.float32)
     return audio
+
+
+def has_video(raw: bytes) -> bool:
+    """True if the container holds a picture track (audio-only MP4s, e.g. WhatsApp voice notes, don't)."""
+    try:
+        import av
+        with av.open(io.BytesIO(raw)) as container:
+            return any(s.type == "video" for s in container.streams)
+    except Exception:
+        return False
+
+
+def _decode_with_av(raw: bytes) -> np.ndarray:
+    """Extract the first audio track of any FFmpeg-readable file as mono 16 kHz float32."""
+    import av  # imported lazily: only needed for formats soundfile can't read
+
+    with av.open(io.BytesIO(raw)) as container:
+        stream = next((s for s in container.streams if s.type == "audio"), None)
+        if stream is None:
+            raise ValueError("this file has no audio track")
+        resampler = av.AudioResampler(format="flt", layout="mono", rate=TARGET_SR)
+        chunks = []
+        for frame in container.decode(stream):
+            for out in resampler.resample(frame):
+                chunks.append(out.to_ndarray().reshape(-1))
+        for out in resampler.resample(None):  # flush samples buffered in the resampler
+            chunks.append(out.to_ndarray().reshape(-1))
+    if not chunks:
+        return np.zeros(0, dtype=np.float32)
+    return np.concatenate(chunks).astype(np.float32)
 
 
 def transcribe(audio: np.ndarray, processor, model, device: str) -> dict:

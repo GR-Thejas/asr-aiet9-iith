@@ -36,6 +36,7 @@ HF_MODEL_ID = (setting("ASR_HF_MODEL") or "").strip()
 LOCK_MODEL = str(setting("ASR_LOCK_MODEL", "")).lower() in ("1", "true", "yes")
 SAMPLES_DIR = APP_DIR / "samples"
 MAX_SECONDS = 180
+VIDEO_EXTS = {".mp4", ".mov", ".webm", ".mkv"}
 ISSUE_TYPES = [
     "Typo / misspelled word",
     "Wrong word (misheard)",
@@ -216,7 +217,7 @@ tab_try, tab_stats, tab_about = st.tabs(["🎤 Try it", "📊 Accuracy dashboard
 with tab_try:
     # Demo clips are kept out of the public repo, so the option only shows when they exist.
     samples = sorted(SAMPLES_DIR.glob("*.wav"))
-    modes = ["🎙️ Record with microphone", "📁 Upload an audio file"]
+    modes = ["🎙️ Record with microphone", "📁 Upload an audio or video file"]
     if samples:
         modes.append("🎧 Use a sample clip")
     mode = st.radio("Input", modes, horizontal=True, label_visibility="collapsed")
@@ -231,10 +232,16 @@ with tab_try:
                    "could not open a microphone (none connected, or another app is using it). "
                    + alternatives)
     elif mode.startswith("📁"):
-        clip = st.file_uploader("Audio file (WAV, FLAC, OGG or MP3)",
-                                type=["wav", "flac", "ogg", "mp3"])
+        clip = st.file_uploader("Audio or video file (WAV, FLAC, OGG, MP3, M4A, MP4, MOV, WEBM or MKV)",
+                                type=["wav", "flac", "ogg", "mp3", "m4a", "aac",
+                                      "mp4", "mov", "webm", "mkv"])
         if clip is not None:
-            st.audio(clip)
+            # WhatsApp voice notes and similar are .mp4 files with no picture: play those as audio.
+            if Path(clip.name).suffix.lower() in VIDEO_EXTS and core.has_video(clip.getvalue()):
+                st.video(clip)
+                st.caption("Only the audio track is transcribed.")
+            else:
+                st.audio(clip)
     else:
         pick = st.selectbox("Sample clip", samples,
                             format_func=lambda p: p.stem.split("_", 1)[-1].replace("_", " ").capitalize())
@@ -254,7 +261,7 @@ with tab_try:
             try:
                 audio = core.load_audio(raw)
             except Exception as exc:
-                st.error(f"Could not read that audio file: {exc}")
+                st.error(f"Could not read the audio in that file: {exc}")
                 st.stop()
             duration = len(audio) / core.TARGET_SR
             if duration > MAX_SECONDS:
